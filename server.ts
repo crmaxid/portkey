@@ -1,9 +1,10 @@
 import express from 'express';
 import router from './routes/routers';
 import { errorMiddleware, responseMiddleware } from './middleware';
+import { ENV } from './config/config';
 
 const app = express();
-const port = 8080;
+const port = ENV.PORT;
 
 app.use(express.json());
 app.use(responseMiddleware);
