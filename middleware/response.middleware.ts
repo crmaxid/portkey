@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { logger } from '../config/logger';
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -13,7 +14,18 @@ declare module 'express-serve-static-core' {
   }
 }
 
-export function responseMiddleware(_req: Request, res: Response, next: NextFunction) {
+export function responseMiddleware(req: Request, res: Response, next: NextFunction) {
+  const start = Date.now();
+
+  res.on('finish', () => {
+    logger.info({
+      method: req.method,
+      url: req.url,
+      status: res.statusCode,
+      ms: Date.now() - start,
+    });
+  });
+
   res.success = function <T>(data: T, message = 'OK', status = 200) {
     const body: ApiResponse<T> = { success: true, message, data };
     this.status(status).json(body);
