@@ -4,7 +4,6 @@ on:
   pull_request:
     types:
       - opened
-      - review_requested
       - closed
 
 jobs:
@@ -28,8 +27,6 @@ jobs:
         id: resolve
         run: |
           if [[ "${{ github.event.action }}" == "opened" ]]; then
-            echo "state=In Progress" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event.action }}" == "review_requested" ]]; then
             echo "state=PR Review" >> $GITHUB_OUTPUT
           elif [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
             echo "state=Ready For QA" >> $GITHUB_OUTPUT
