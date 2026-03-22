@@ -118,4 +118,5 @@ export interface PaginatedResponse<T> {
 }
 
 export type ProjectListResponse = PaginatedResponse<Project>;
+export type StateListResponse = PaginatedResponse<State>;
 export type WorkItemListResponse = PaginatedResponse<WorkItem>;

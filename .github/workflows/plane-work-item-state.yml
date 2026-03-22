@@ -9,9 +9,22 @@ on:
 
 jobs:
   update-state:
+    if: contains(github.head_ref, '-')
     runs-on: ubuntu-latest
     steps:
+      - name: Extract work item identifier
+        id: check
+        run: |
+          identifier=$(echo "${{ github.head_ref }}" | grep -oE '[A-Za-z][A-Za-z0-9]*-[0-9]+' | head -1)
+          if [[ -n "$identifier" ]]; then
+            echo "is_work_item=true" >> $GITHUB_OUTPUT
+            echo "identifier=$identifier" >> $GITHUB_OUTPUT
+          else
+            echo "is_work_item=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Resolve target state
+        if: steps.check.outputs.is_work_item == 'true'
         id: resolve
         run: |
           if [[ "${{ github.event.action }}" == "opened" ]]; then
@@ -19,16 +32,17 @@ jobs:
           elif [[ "${{ github.event.action }}" == "review_requested" ]]; then
             echo "state=PR Review" >> $GITHUB_OUTPUT
           elif [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
-            echo "state=Done" >> $GITHUB_OUTPUT
+            echo "state=Ready For QA" >> $GITHUB_OUTPUT
           else
             echo "state=Cancelled" >> $GITHUB_OUTPUT
           fi
 
       - name: Update work item state
+        if: steps.check.outputs.is_work_item == 'true'
         run: |
           curl -sf -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
             -H "Content-Type: application/json" \
             -d "{
-              \"branch\": \"${{ github.head_ref }}\",
+              \"branch\": \"${{ steps.check.outputs.identifier }}\",
               \"state\": \"${{ steps.resolve.outputs.state }}\"
             }"

@@ -1,0 +1,31 @@
+name: Plane — Mark Done on Release
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  mark-done:
+    if: github.event.pull_request.merged == true && github.head_ref == 'development'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract work items from commits and mark Done
+        run: |
+          git log origin/main..HEAD --format="%s %b" \
+            | grep -oE '[A-Za-z][A-Za-z0-9]*-[0-9]+' \
+            | sort -u \
+            | while read identifier; do
+                echo "Marking $identifier as Done..."
+                curl -sf -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"branch\": \"$identifier\", \"state\": \"Done\"}" || \
+                echo "Warning: failed to update $identifier, skipping"
+              done

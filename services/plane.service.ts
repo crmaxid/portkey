@@ -2,7 +2,7 @@ import { planeAxios } from '../config/axios';
 import type {
   Project,
   ProjectListResponse,
-  State,
+  StateListResponse,
   WorkItem,
   WorkItemLink,
   WorkItemListResponse,
@@ -25,10 +25,10 @@ export const getOneProject = async (workspace: string, projectIdentifier: string
 };
 
 export const getStates = async (workspace: string, projectId: string) => {
-  const response = await planeAxios.get<State[]>(
+  const response = await planeAxios.get<StateListResponse>(
     `/workspaces/${workspace}/projects/${projectId}/states`,
   );
-  return response.data;
+  return response.data.results;
 };
 
 export const getStateByName = async (workspace: string, projectId: string, stateName: string) => {
@@ -90,7 +90,7 @@ export const addWorkItemLink = async (
 export const parseBranchName = (
   branch: string,
 ): { projectIdentifier: string; sequenceId: number } | null => {
-  const match = branch.match(/^([A-Z][A-Z0-9]*)-(\d+)$/i);
+  const match = branch.match(/([A-Za-z][A-Za-z0-9]*)-(\d+)/);
   const [, identifier, sequence] = match ?? [];
   if (!identifier || !sequence) return null;
   return {
