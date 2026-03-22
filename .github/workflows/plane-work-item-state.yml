@@ -1,0 +1,34 @@
+name: Plane — Update Work Item State
+
+on:
+  pull_request:
+    types:
+      - opened
+      - review_requested
+      - closed
+
+jobs:
+  update-state:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve target state
+        id: resolve
+        run: |
+          if [[ "${{ github.event.action }}" == "opened" ]]; then
+            echo "state=In Progress" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event.action }}" == "review_requested" ]]; then
+            echo "state=PR Review" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
+            echo "state=Done" >> $GITHUB_OUTPUT
+          else
+            echo "state=Cancelled" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update work item state
+        run: |
+          curl -sf -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"branch\": \"${{ github.head_ref }}\",
+              \"state\": \"${{ steps.resolve.outputs.state }}\"
+            }"
