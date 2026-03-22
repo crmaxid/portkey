@@ -1,0 +1,27 @@
+name: Plane — Attach Branch Link & Set In Progress
+
+on:
+  create:
+
+jobs:
+  attach-link:
+    if: github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Attach branch link to work item
+        run: |
+          curl -sf -X POST "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/link" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"branch\": \"${{ github.ref_name }}\",
+              \"url\": \"${{ github.server_url }}/${{ github.repository }}/tree/${{ github.ref_name }}\"
+            }"
+
+      - name: Set work item state to In Progress
+        run: |
+          curl -sf -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"branch\": \"${{ github.ref_name }}\",
+              \"state\": \"In Progress\"
+            }"
