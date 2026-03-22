@@ -90,7 +90,7 @@ export const addWorkItemLink = async (
 export const parseBranchName = (
   branch: string,
 ): { projectIdentifier: string; sequenceId: number } | null => {
-  const match = branch.match(/^([A-Z][A-Z0-9]*)-(\d+)$/i);
+  const match = branch.match(/([A-Za-z][A-Za-z0-9]*)-(\d+)/);
   const [, identifier, sequence] = match ?? [];
   if (!identifier || !sequence) return null;
   return {
