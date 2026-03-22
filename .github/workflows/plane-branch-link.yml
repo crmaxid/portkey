@@ -35,7 +35,7 @@ jobs:
       - name: Set work item state to In Progress
         if: steps.check.outputs.is_work_item == 'true'
         run: |
-          curl -sf -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
+          curl -s --fail-with-body -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
             -H "Content-Type: application/json" \
             -d "{
               \"branch\": \"${{ steps.check.outputs.identifier }}\",
