@@ -5,10 +5,20 @@ on:
 
 jobs:
   attach-link:
-    if: github.ref_type == 'branch'
+    if: github.ref_type == 'branch' && contains(github.ref_name, '-')
     runs-on: ubuntu-latest
     steps:
+      - name: Check if work item branch
+        id: check
+        run: |
+          if [[ "${{ github.ref_name }}" =~ ^[A-Za-z][A-Za-z0-9]*-[0-9]+$ ]]; then
+            echo "is_work_item=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_work_item=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Attach branch link to work item
+        if: steps.check.outputs.is_work_item == 'true'
         run: |
           curl -sf -X POST "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/link" \
             -H "Content-Type: application/json" \
@@ -18,6 +28,7 @@ jobs:
             }"
 
       - name: Set work item state to In Progress
+        if: steps.check.outputs.is_work_item == 'true'
         run: |
           curl -sf -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
             -H "Content-Type: application/json" \
