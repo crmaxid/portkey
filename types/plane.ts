@@ -57,13 +57,17 @@ export interface State {
   description: string;
   sequence: number;
   group: 'backlog' | 'unstarted' | 'started' | 'completed' | 'cancelled';
+  is_triage: boolean;
   default: boolean;
+  external_source: string | null;
+  external_id: string | null;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
   project: string;
   workspace: string;
   created_by: string;
-  updated_by: string;
+  updated_by: string | null;
 }
 
 export interface WorkItem {
