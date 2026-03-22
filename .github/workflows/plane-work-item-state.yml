@@ -9,9 +9,20 @@ on:
 
 jobs:
   update-state:
+    if: contains(github.head_ref, '-')
     runs-on: ubuntu-latest
     steps:
+      - name: Check if work item branch
+        id: check
+        run: |
+          if [[ "${{ github.head_ref }}" =~ ^[A-Za-z][A-Za-z0-9]*-[0-9]+$ ]]; then
+            echo "is_work_item=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_work_item=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Resolve target state
+        if: steps.check.outputs.is_work_item == 'true'
         id: resolve
         run: |
           if [[ "${{ github.event.action }}" == "opened" ]]; then
@@ -25,6 +36,7 @@ jobs:
           fi
 
       - name: Update work item state
+        if: steps.check.outputs.is_work_item == 'true'
         run: |
           curl -sf -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
             -H "Content-Type: application/json" \
