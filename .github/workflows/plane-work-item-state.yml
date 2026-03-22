@@ -30,7 +30,7 @@ jobs:
           elif [[ "${{ github.event.action }}" == "review_requested" ]]; then
             echo "state=PR Review" >> $GITHUB_OUTPUT
           elif [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
-            echo "state=Done" >> $GITHUB_OUTPUT
+            echo "state=Ready For QA" >> $GITHUB_OUTPUT
           else
             echo "state=Cancelled" >> $GITHUB_OUTPUT
           fi

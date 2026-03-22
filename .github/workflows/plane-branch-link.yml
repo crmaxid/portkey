@@ -2,10 +2,13 @@ name: Plane — Attach Branch Link & Set In Progress
 
 on:
   create:
+  push:
+    branches:
+      - '**'
 
 jobs:
   attach-link:
-    if: github.ref_type == 'branch' && contains(github.ref_name, '-')
+    if: contains(github.ref_name, '-')
     runs-on: ubuntu-latest
     steps:
       - name: Check if work item branch
@@ -18,7 +21,7 @@ jobs:
           fi
 
       - name: Attach branch link to work item
-        if: steps.check.outputs.is_work_item == 'true'
+        if: steps.check.outputs.is_work_item == 'true' && github.event_name == 'create'
         run: |
           curl -sf -X POST "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/link" \
             -H "Content-Type: application/json" \
