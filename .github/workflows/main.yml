@@ -3,14 +3,14 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - development
+      - staging
       - main
     paths:
-      - '**/*.ts'
-      - 'Dockerfile'
-      - 'package.json'
-      - 'bun.lock'
-      - 'tsconfig.json'
+      - "**/*.ts"
+      - "Dockerfile"
+      - "package.json"
+      - "bun.lock"
+      - "tsconfig.json"
 
 jobs:
   build-and-push:
@@ -31,17 +31,17 @@ jobs:
       - name: Log in to Docker Hub
         run: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
-      - name: Build and push for development
-        if: github.ref == 'refs/heads/development'
+      - name: Build and push for staging
+        if: github.ref == 'refs/heads/staging'
         run: |
-          docker build -t $DOCKER_USERNAME/cims-image-hub:portkey-development .
-          docker push $DOCKER_USERNAME/cims-image-hub:portkey-development
+          docker build -t $DOCKER_USERNAME/crmax-hub:portkey-staging .
+          docker push $DOCKER_USERNAME/crmax-hub:portkey-staging
 
       - name: Build and push for production
         if: github.ref == 'refs/heads/main'
         run: |
-          docker build -t $DOCKER_USERNAME/cims-image-hub:portkey-production .
-          docker push $DOCKER_USERNAME/cims-image-hub:portkey-production
+          docker build -t $DOCKER_USERNAME/crmax-hub:portkey-production .
+          docker push $DOCKER_USERNAME/crmax-hub:portkey-production
 
   release:
     runs-on: ubuntu-latest
