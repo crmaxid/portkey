@@ -1,34 +1,23 @@
-import { planeAxios } from '../config/axios';
-import type {
-  Project,
-  ProjectListResponse,
-  StateListResponse,
-  WorkItem,
-  WorkItemLink,
-  WorkItemListResponse,
-} from '../types';
+import { planeClient } from '../config';
 
 export const getProjects = async (workspace: string) => {
-  const response = await planeAxios.get<ProjectListResponse>(`/workspaces/${workspace}/projects`);
-  return response.data;
+  const { results } = await planeClient.projects.list(workspace);
+  return { results };
 };
 
 export const getOneProject = async (workspace: string, projectIdentifier: string) => {
-  const projects = await getProjects(workspace);
-  const project = projects.results.find((p) => p.identifier === projectIdentifier.toUpperCase());
+  const { results } = await planeClient.projects.list(workspace);
+  const project = results.find((p) => p.identifier === projectIdentifier.toUpperCase());
 
   if (!project)
     throw new Error(`Project '${projectIdentifier}' not found in workspace '${workspace}'`);
 
-  const response = await planeAxios.get<Project>(`/workspaces/${workspace}/projects/${project.id}`);
-  return response.data;
+  return project;
 };
 
 export const getStates = async (workspace: string, projectId: string) => {
-  const response = await planeAxios.get<StateListResponse>(
-    `/workspaces/${workspace}/projects/${projectId}/states`,
-  );
-  return response.data.results;
+  const { results } = await planeClient.states.list(workspace, projectId);
+  return results;
 };
 
 export const getStateByName = async (workspace: string, projectId: string, stateName: string) => {
@@ -40,37 +29,13 @@ export const getStateByName = async (workspace: string, projectId: string, state
   return state;
 };
 
-export const getWorkItems = async (workspace: string, projectId: string) => {
-  const response = await planeAxios.get<WorkItemListResponse>(
-    `/workspaces/${workspace}/projects/${projectId}/work-items`,
-  );
-  return response.data;
-};
-
-export const getWorkItemBySequenceId = async (
-  workspace: string,
-  projectId: string,
-  sequenceId: number,
-) => {
-  const workItems = await getWorkItems(workspace, projectId);
-  const workItem = workItems.results.find((w) => w.sequence_id === sequenceId);
-
-  if (!workItem) throw new Error(`Work item #${sequenceId} not found`);
-
-  return workItem;
-};
-
 export const updateWorkItemState = async (
   workspace: string,
   projectId: string,
   workItemId: string,
   stateId: string,
 ) => {
-  const response = await planeAxios.patch<WorkItem>(
-    `/workspaces/${workspace}/projects/${projectId}/work-items/${workItemId}`,
-    { state: stateId },
-  );
-  return response.data;
+  return planeClient.workItems.update(workspace, projectId, workItemId, { state: stateId });
 };
 
 export const addWorkItemLink = async (
@@ -80,22 +45,19 @@ export const addWorkItemLink = async (
   title: string,
   url: string,
 ) => {
-  const response = await planeAxios.post<WorkItemLink>(
-    `/workspaces/${workspace}/projects/${projectId}/work-items/${workItemId}/links`,
-    { title, url },
-  );
-  return response.data;
+  return planeClient.workItems.links.create(workspace, projectId, workItemId, { title, url });
 };
 
 export const parseBranchName = (
   branch: string,
-): { projectIdentifier: string; sequenceId: number } | null => {
+): { projectIdentifier: string; sequenceId: number; identifier: string } | null => {
   const match = branch.match(/([A-Za-z][A-Za-z0-9]*)-(\d+)/);
   const [, identifier, sequence] = match ?? [];
   if (!identifier || !sequence) return null;
   return {
     projectIdentifier: identifier.toUpperCase(),
     sequenceId: parseInt(sequence, 10),
+    identifier: `${identifier.toUpperCase()}-${sequence}`,
   };
 };
 
@@ -103,10 +65,7 @@ export const resolveWorkItemFromBranch = async (workspace: string, branch: strin
   const parsed = parseBranchName(branch);
   if (!parsed) throw new Error(`Branch '${branch}' does not match pattern <PROJECT>-<number>`);
 
-  const { projectIdentifier, sequenceId } = parsed;
+  const workItem = await planeClient.workItems.retrieveByIdentifier(workspace, parsed.identifier);
 
-  const project = await getOneProject(workspace, projectIdentifier);
-  const workItem = await getWorkItemBySequenceId(workspace, project.id, sequenceId);
-
-  return { project, workItem };
+  return { projectId: workItem.project, workItem };
 };

@@ -2,13 +2,15 @@ name: Plane — Attach Branch Link & Set In Progress
 
 on:
   create:
-  push:
-    branches:
-      - '**'
 
 jobs:
   attach-link:
-    if: contains(github.ref_name, '-')
+    if: |
+      github.ref_type == 'branch' &&
+      github.ref_name != 'main' &&
+      github.ref_name != 'staging' &&
+      github.ref_name != 'development' &&
+      contains(github.ref_name, '-')
     runs-on: ubuntu-latest
     steps:
       - name: Extract work item identifier
@@ -23,9 +25,9 @@ jobs:
           fi
 
       - name: Attach branch link to work item
-        if: steps.check.outputs.is_work_item == 'true' && github.event_name == 'create'
+        if: steps.check.outputs.is_work_item == 'true'
         run: |
-          curl -sf -X POST "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/link" \
+          curl --fail-with-body -s -X POST "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/link" \
             -H "Content-Type: application/json" \
             -d "{
               \"branch\": \"${{ steps.check.outputs.identifier }}\",
@@ -35,7 +37,7 @@ jobs:
       - name: Set work item state to In Progress
         if: steps.check.outputs.is_work_item == 'true'
         run: |
-          curl -s --fail-with-body -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
+          curl --fail-with-body -s -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
             -H "Content-Type: application/json" \
             -d "{
               \"branch\": \"${{ steps.check.outputs.identifier }}\",

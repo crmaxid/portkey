@@ -1,10 +1,12 @@
-name: Plane — Update Work Item State
+name: Plane — Update Work Item State on PR to Development
 
 on:
   pull_request:
     types:
       - opened
       - closed
+    branches:
+      - development
 
 jobs:
   update-state:
@@ -28,16 +30,16 @@ jobs:
         run: |
           if [[ "${{ github.event.action }}" == "opened" ]]; then
             echo "state=PR Review" >> $GITHUB_OUTPUT
-          elif [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
-            echo "state=Ready For QA" >> $GITHUB_OUTPUT
-          else
+          elif [[ "${{ github.event.pull_request.merged }}" != "true" ]]; then
             echo "state=Cancelled" >> $GITHUB_OUTPUT
+          else
+            echo "skip=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Update work item state
-        if: steps.check.outputs.is_work_item == 'true'
+        if: steps.check.outputs.is_work_item == 'true' && steps.resolve.outputs.skip != 'true'
         run: |
-          curl -sf -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
+          curl --fail-with-body -s -X PATCH "${{ secrets.PORTKEY_URL }}/plane/crmax-performance/branch/state" \
             -H "Content-Type: application/json" \
             -d "{
               \"branch\": \"${{ steps.check.outputs.identifier }}\",

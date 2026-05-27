@@ -68,11 +68,11 @@ PlaneRouter.post(
 
       if (!branch || !url) return res.fail('branch and url are required');
 
-      const { project, workItem } = await resolveWorkItemFromBranch(workspace, branch);
+      const { projectId, workItem } = await resolveWorkItemFromBranch(workspace, branch);
 
       const data = await addWorkItemLink(
         workspace,
-        project.id,
+        projectId,
         workItem.id,
         title ?? `Branch: ${branch}`,
         url,
@@ -97,10 +97,10 @@ PlaneRouter.patch(
 
       if (!branch || !stateName) return res.fail('branch and state are required');
 
-      const { project, workItem } = await resolveWorkItemFromBranch(workspace, branch);
-      const state = await getStateByName(workspace, project.id, stateName);
+      const { projectId, workItem } = await resolveWorkItemFromBranch(workspace, branch);
+      const state = await getStateByName(workspace, projectId, stateName);
 
-      const data = await updateWorkItemState(workspace, project.id, workItem.id, state.id);
+      const data = await updateWorkItemState(workspace, projectId, workItem.id, state.id);
 
       res.success(data, `Work item state updated to '${state.name}'`);
     } catch (error) {
